@@ -12,16 +12,26 @@
 # a public website.
 
 import report
+import requests
 
 class PriceMap:
-    ...
+    def __init__(self):
+        self.prices = {}
+
+    def __getitem__(self, name):
+        # fetch a price from some web 
+        if name not in self.prices:
+            r = requests.get(f'https://finnhub.io/api/v1/quote?symbol={name}')
+            self.prices[name] = r.json()['pc']
+
+        return self.prices[name]
 
 def main():
     import report
     import ex1
     # Verify the mutability tests with a standard list
-    portfolio = ex1.Portfolio.from_csv('portfolio.csv')
-    prices = PriceMap(...)     # must modify
+    portfolio = ex1.Portfolio.from_csv('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/portfolio.csv')
+    prices = PriceMap()     # must modify
     report.print_report(portfolio, prices)
     
 if __name__ == '__main__':

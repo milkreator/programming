@@ -1,11 +1,11 @@
 # Owning The Abstractions
 
-A key idea of data abstraction is that interfaces are often more
+A key idea of data abstraction is that **interfaces** are often more
 important than implementation. As long as applications use the
 interface, the internal implementation can change without breaking the
 rest of the code.
 
-This project twists this idea in a slightly different direction. As
+This project twists this idea in a slghtly different direction. As
 programmers, we're often at the mercy of what libraries and frameworks
 provide.  It is tempting to write code that directly interacts with a
 library.  However, in doing so, you introduce a hard-dependency into
@@ -13,9 +13,9 @@ your application--that is, your application becomes inseparable from
 the libraries on which it depends.
 
 Instead of directly depending on libraries, a different approach is to
-create your own abstractions.  In essence, you think hard about how
+**create your own abstractions**.  In essence, you think hard about how
 you would ideally want some aspect of your program to work, and then
-you create abstractions that mirror that.  Afterwards, you build a
+you **create abstractions that mirror that**.  Afterwards, you build a
 concrete implementation using existing libraries and frameworks.
 
 It's subtle, but this approach gives you ownership of an abstraction.

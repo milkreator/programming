@@ -31,12 +31,15 @@ class Fraction:
         #self.denominator = denominator // d
 
         # use the __setattr__ on objects, bypassing
+        # the version of __setattr__ defined below
         super().__setattr__('numerator', numerator // d)
         super().__setattr__('denominator', denominator // d)
 
     def __setattr__(self, name, value):
         raise AttributeError("Attribute is immutable")
 
+    def __hash__(self): #TODO-in dictionary
+        return hash(self.numerator, self.denominator)
     #
     def __add__(self, other):
         return Fraction(numerator(self) * denominator(other) + denominator(self) * numerator(other) ,

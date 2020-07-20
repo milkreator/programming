@@ -62,7 +62,7 @@ def print_report(portfolio, prices):
     print(f'Change: {value-cost:0.2f}')
 
 if __name__ == '__main__':
-    portfolio = read_portfolio('portfolio.csv')
-    prices = read_prices('prices.csv')
+    portfolio = read_portfolio('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/portfolio.csv')
+    prices = read_prices('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/prices.csv')
     print_report(portfolio, prices)
     

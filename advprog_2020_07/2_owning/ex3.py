@@ -25,21 +25,39 @@
 # -----------------------------------------------------------------------------
 
 import pandas
+import ex1
+import report
 
 class PandasPortfolio:
+    def __init__(self):
+        self.data = None
+
+        
     @classmethod
     def from_csv(cls, filename):
-        ...
+        self = cls()
         self.data = pandas.read_csv(filename)
-        ...
+        return self
     # You need to define additional methods
-    ...
+    def __getitem__(self, index):
+        row = self.data.iloc[index]
+        return report.Holding(self.data['name'][row],
+                              self.data['shares'][row],
+                              self.data['price'][row])
+    def __getitem__(self, index):
+        if index >= len(self.data):
+            raise IndexError()
+        return report.Holding(self.data['name'][index],
+                              self.data['shares'][index],
+                              self.data['price'][index])
+
+    
     
 def main():
     import report
     import ex1
-    portfolio = PandasPortfolio.from_csv("portfolio.csv")
-    prices = ex1.PriceMap.from_csv("prices.csv")
+    portfolio = PandasPortfolio.from_csv('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/portfolio.csv')
+    prices = ex1.PriceMap.from_csv('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/prices.csv')
     # This should work without modification
     report.print_report(portfolio, prices)
 

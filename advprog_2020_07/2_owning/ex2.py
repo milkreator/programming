@@ -10,6 +10,7 @@
 # following code that does just that:
 
 import csv
+import report
 
 def read_portfolio_as_columns(filename):
     columns = {
@@ -17,7 +18,8 @@ def read_portfolio_as_columns(filename):
         'shares': [],
         'price': []
     }
-    with open(filename, 'rt') as file:
+
+    with open('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/portfolio.csv', 'rt') as file:
         rows = csv.reader(file)
         next(rows)    # Skip headers
         for row in rows:
@@ -30,7 +32,6 @@ def read_portfolio_as_columns(filename):
 # Task 1: Try running the above function on "portfolio.csv" and look
 # at the resulting data structure.  Make sure you understand what's
 # happening and how it's different than before.
-
 columns = read_portfolio_as_columns('portfolio.csv')
 print(columns)                                
 
@@ -53,20 +54,34 @@ print(columns)
 # perform some kind of adaptation of the data.
 
 class PortfolioColumns:
+    def __init__(self):
+        self.data = {
+        'name': [],
+        'shares': [],
+        'price': []
+        }
+
     @classmethod
     def from_csv(cls, filename):
-        ...
-        self.data = read_portfolio_as_columns(filename)
+        self = cls()
+        self.data = read_portfolio_as_columns('portfolio.csv')
         return self
+        #self.data = read_portfolio_as_columns(filename)
+        #return self
 
-    ...
-    # More definitions will be needed
+    def __getitem__(self, row):
+    # create a "holding" on demand and return it. appear list-like ... 
+        return report.Holding(self.data['name'][row],
+                              self.data['shares'][row],
+                              self.data['price'][row]
+        )
 
 def main():
     import report
     import ex1
-    portfolio = PortfolioColumns.from_csv("portfolio.csv")
-    prices = ex1.PriceMap.from_csv("prices.csv")
+
+    portfolio = PortfolioColumns.from_csv('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/portfolio.csv')
+    prices = ex1.PriceMap.from_csv('/Users/zhaowenlong/workspace/proj/programming/advprog_2020_07/2_owning/prices.csv')
     # This should work without modification
     report.print_report(portfolio, prices)
 
