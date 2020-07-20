@@ -1,7 +1,7 @@
 
 ##### notes  
   * glue components together  
-  * **search** for an almost answer using computer, not in math  
+  * **search for an approximate answer** using computer, not in math  
     - start from the problem, then split into smaller problems
 
 #### The Elements of Programming  
