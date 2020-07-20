@@ -17,7 +17,7 @@ def make_frac(numer, denom):
     d = gcd(numer, denom)
     numer = numer // d
     denom = denom // d
-    def frac(s):
+    def frac(s):  # 'Cloure'.  inner functions capture the environment of outer functions
         return numer if s else denom
     return frac
 
@@ -31,7 +31,23 @@ def denominator(f):
 # sub_frac(), mul_frac(), and div_frac() here.  MAKE NO CHANGES. 
 # Verify that it still passes all of the unit tests--somehow.
 
-... # Your code here
+ # Your code here
+def add_frac(a, b): 
+    return make_frac(numerator(a) * denominator(b) + denominator(a) * numerator(b) ,
+    denominator(a) * denominator(b) )
+
+def sub_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) - denominator(a) * numerator(b) 
+    , denominator(a) * denominator(b) )
+
+def mul_frac(a, b):
+    return make_frac(numerator(a) * numerator(b)  
+    , denominator(a) * denominator(b) )
+
+def div_frac(a, b):
+    return make_frac(numerator(a) * denominator(b)  
+    , denominator(a) * numerator(b) )
+    
 
 # Unit tests.  This is the same set of tests as before.  NO CHANGES MADE.    
 def test_frac():

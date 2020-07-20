@@ -5,13 +5,45 @@
 
 from typing import NamedTuple
 
+# create a NamedTuple class, u
 class Fraction(NamedTuple):
     numerator : int
     denominator : int
 
 # Paste your earlier code here and modify it to work with named tuples.
+def gcd(a, b):
+    while b: 
+        a, b = b, a % b 
+    return a
+    
+def make_frac(numer, denom):
+    d = gcd(numer, denom)
+    return Fraction(numer // d, denom // d)
+    #return (numer // d, denom // d)
 
-...
+def numerator(f):
+    return f.numerator
+
+def denominator(f):
+    return f.denominator
+
+def add_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) + denominator(a) * numerator(b) ,
+    denominator(a) * denominator(b) )
+    
+
+def sub_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) - denominator(a) * numerator(b) 
+    , denominator(a) * denominator(b) )
+
+def mul_frac(a, b):
+    return make_frac(numerator(a) * numerator(b)  
+    , denominator(a) * denominator(b) )
+
+def div_frac(a, b):
+    return make_frac(numerator(a) * denominator(b)  
+    , denominator(a) * numerator(b) )
+    
 
 # Unit tests. These are the same tests as before. NO CHANGES MADE.
 def test_frac():

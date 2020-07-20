@@ -38,6 +38,17 @@ class Fraction(NamedTuple):
     denominator : int
     # You'll need to make modifications to pass the test below
 
+def make_frac(numer, denom):
+    d = gcd(numer, denom)
+    return Fraction(numer // d, denom // d)
+    #return (numer // d, denom // d)
+
+def numerator(f):
+    return f.numerator
+
+def denominator(f):
+    return f.denominator
+
 def test_frac():
     a = Fraction(4, 6)
     assert a.numerator == 2

@@ -17,8 +17,107 @@
 # functionality. The old unit tests should still pass.
 # -----------------------------------------------------------------------------
 
+def gcd(a, b):
+    while b: 
+        a, b = b, a % b 
+    return a
+
 class Fraction:
-    ...
+    def __init__(self, numerator, denominator):
+        #self.numerator = numerator
+        #self.denominator = denominator
+        d = gcd(numerator, denominator)
+        #self.numerator = numerator // d
+        #self.denominator = denominator // d
+
+        # use the __setattr__ on objects, bypassing
+        super().__setattr__('numerator', numerator // d)
+        super().__setattr__('denominator', denominator // d)
+
+    def __setattr__(self, name, value):
+        raise AttributeError("Attribute is immutable")
+
+    #
+    def __add__(self, other):
+        return Fraction(numerator(self) * denominator(other) + denominator(self) * numerator(other) ,
+    denominator(self) * denominator(other) )
+    
+    __radd__ = __add__
+
+    def __sub__(self, other):
+        return Fraction(numerator(self) * denominator(other) - denominator(self) * numerator(other) 
+    , denominator(self) * denominator(other) )
+
+    def __rsub__(self, other):
+        return Fraction(numerator(self) * denominator(other) - denominator(self) * numerator(other) 
+    , denominator(self) * denominator(other) )
+
+    #
+    def __mul__(self, other):
+        return Fraction(numerator(self) * numerator(other)  
+    , denominator(self) * denominator(other) )
+    
+    __rmul__ = __mul__
+
+    def __truediv__(self, other):
+        return Fraction(numerator(self) * denominator(other)  
+    , denominator(self) * numerator(other) )
+
+    def __rtruediv__(self, other):
+        return Fraction(numerator(self) * denominator(other)  
+    , denominator(self) * numerator(other) )
+
+    def __lt__(self,other):
+        r = self.__sub__(other)
+        #
+        return r.numerator < 0
+
+        return (self.numerator * other.denominator < other.numerator * other.denominator)
+ 
+    def __le__(self,other):
+        return (self.numerator * other.denominator <= other.numerator * other.denominator)
+    
+    def __gt__(self, other):
+        return (self.numerator * other.denominator > other.numerator * other.denominator)
+  
+    def __ge__(self, other):
+        return (self.numerator * other.denominator >= other.numerator * other.denominator)
+  
+    def __eq__(self, other):
+        return (self.numerator * other.denominator == other.numerator * other.denominator)
+  
+    def __str__(self):
+        if self.denominator == 1:
+            return str(self.numerator)
+        else:
+            return f'{self.numerator}/{self.denominator}'
+
+    def __float__(self):
+        return self.numeraotr / self.denominator
+
+
+def make_frac(numer, denom):
+    #d = gcd(numer, denom)
+    return Fraction(numer, denom)
+
+def numerator(f):
+    return f.numerator
+
+def denominator(f):
+    return f.denominator
+
+def add_frac(a, b):
+    return a + b
+
+def sub_frac(a, b):
+    return a - b
+    
+def mul_frac(a, b):
+    return a * b
+
+def div_frac(a, b):
+    return a / b
+    
 
 # The old unit tests must still pass (legacy code)
 def test_frac():

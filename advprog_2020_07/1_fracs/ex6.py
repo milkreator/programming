@@ -49,9 +49,47 @@
 # Integers happen to provide .numerator and .denominator attributes
 # so it just started "working" as if by magic.
 # -----------------------------------------------------------------------------
+def gcd(a, b):
+    while b: 
+        a, b = b, a % b 
+    return a
 
 class Fraction:
+    def __init__(self, numerator, denominator):
+        #self.numerator = numerator
+        #self.denominator = denominator
+        d = gcd(numerator, denominator)
+        self.numerator = numerator // d
+        self.denominator = denominator // d
 #    ... # You complete
+
+def make_frac(numer, denom):
+    #d = gcd(numer, denom)
+    return Fraction(numer, denom)
+
+def numerator(f):
+    return f.numerator
+
+def denominator(f):
+    return f.denominator
+
+def add_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) + denominator(a) * numerator(b) ,
+    denominator(a) * denominator(b) )
+    
+
+def sub_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) - denominator(a) * numerator(b) 
+    , denominator(a) * denominator(b) )
+
+def mul_frac(a, b):
+    return make_frac(numerator(a) * numerator(b)  
+    , denominator(a) * denominator(b) )
+
+def div_frac(a, b):
+    return make_frac(numerator(a) * denominator(b)  
+    , denominator(a) * numerator(b) )
+    
 
 # Do not change any of the other functions.  Paste from earlier exercises.
 

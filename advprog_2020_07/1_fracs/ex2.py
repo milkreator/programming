@@ -24,17 +24,39 @@ def gcd(a, b):
     return a
 
 def make_frac(numer, denom):
-    return { ... }         # Return a dictionary of some kind
+    d = gcd(numer, denom)
+    return { 'numerator': numer // d, 
+             'denominator' : denom // d
+    }
+    #return { ... }         # Return a dictionary of some kind
 
 def numerator(f):
-    pass
+    return f['numerator']
+    
 
 def denominator(f):
-    pass
-
+    return f['denominator']
+    
 # Paste the implementation of add_frac(), sub_frac(), mul_frac(), div_frac()
 # from ex1.py here. MAKE NO CHANGES TO THAT CODE.
+def add_frac(a, b):
+    
+    return make_frac(numerator(a) * denominator(b) + denominator(a) * numerator(b) ,
+    denominator(a) * denominator(b) )
+    
 
+def sub_frac(a, b):
+    return make_frac(numerator(a) * denominator(b) - denominator(a) * numerator(b) 
+    , denominator(a) * denominator(b) )
+
+def mul_frac(a, b):
+    return make_frac(numerator(a) * numerator(b)  
+    , denominator(a) * denominator(b) )
+
+def div_frac(a, b):
+    return make_frac(numerator(a) * denominator(b)  
+    , denominator(a) * numerator(b) )
+    
 
 # Unit tests.  This is the same set of tests as before.  NO CHANGES MADE.    
 def test_frac():

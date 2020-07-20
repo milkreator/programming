@@ -28,6 +28,11 @@
 # "wishful thinking" coding. Focus on the actual problem being solved
 #  a function (or object) that directly address that
 
+
+from decimal import Decimal
+Number = Decimal
+LOW_PRICE = Number('1.0')
+
 # Problem parameters (abstraction)
 LOW_PRICE  = 1.0
 HIGH_PRICE = 10.0

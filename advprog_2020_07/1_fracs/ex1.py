@@ -38,16 +38,21 @@ def denominator(f):
 # sure the unit tests below pass.  
 
 def add_frac(a, b):
-    pass
+    return make_frac(numerator(a) * denominator(b) + denominator(a) * numerator(b) ,
+    denominator(a) * denominator(b) )
+    
 
 def sub_frac(a, b):
-    pass
+    return make_frac(numerator(a) * denominator(b) - denominator(a) * numerator(b) 
+    , denominator(a) * denominator(b) )
 
 def mul_frac(a, b):
-    pass
+    return make_frac(numerator(a) * numerator(b)  
+    , denominator(a) * denominator(b) )
 
 def div_frac(a, b):
-    pass
+    return make_frac(numerator(a) * denominator(b)  
+    , denominator(a) * numerator(b) )
     
 def test_frac():
     a = make_frac(4, 6)
