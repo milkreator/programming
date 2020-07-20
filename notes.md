@@ -9,19 +9,19 @@
 
 
 #### Data Abstraction  
-  * Data Abstraction Idea  
+  * Data Abstraction Idea    
 
-    Application Code (using Data) 
-    ------ [ interface ] --------
-    Data Representatin (bits/bytes)  
+    Application Code (using Data)   
+    ------ [ interface ] --------    
+    Data Representatin (bits/bytes)    
 
-  * changing the low-level data representation doesn't need to change the high-level code 
+  * changing the low-level data representation doesn't need to change the high-level code  
 
 
   * TODO  
     - class  
 
-  *  create abstractions that mirror some aspect of your program to work  
+  *  create abstractions that **mirror some aspect of your program** to work  
     - give you ownership of an abstraction  
 
 
