@@ -6,19 +6,19 @@
 # There are several components to the system including messages,
 # dispatching, and message encoding.  However, our concern here is not
 # so much the actual mechanics of the messaging (i.e., networks), but
-# issues related to the organization and composition of the parts
+# issues related to **the organization and composition of the parts**
 # that will ultimately make up the system.
 
 # -----------------------------------------------------------------------------
 # Exercise 1 - This message will self destruct... maybe
 #
 # In this messaging system, programs potentially run forever, creating
-# billions of messages.  One area of concern is object management and
-# garbage collection. When do messages get destroyed?  Is it possible
+# billions of messages.  One area of concern is **object management and
+# garbage collection**. When do messages get destroyed?  Is it possible
 # for Python to leak memory?  Is it going to be one of those programs
 # you have to "restart" every so often simply to clean up?
 #
-# Python uses reference counting to manage the life-time of objects.
+# Python uses **reference counting** to manage the life-time of objects.
 # The reference count is increased on an object whenever you make a
 # new variable reference or store it in any kind of container.  The
 # reference count is decreased when variables go away or the object is
@@ -37,11 +37,16 @@
 class Message:
     _sequence = 0
 
-    def __init__(self, source, dest):
+    def __init__(self, source, dest,  payload=None, _sequence = None):
         self.source = source
         self.dest = dest
-        self.sequence = Message._sequence
-        Message._sequence += 1
+        #self.signature = signature
+        self.payload = payload
+        if _sequence is None:
+            self.sequence = Message._sequence
+            Message._sequence += 1
+        else:
+            self.sequence = _sequence
 
     def __repr__(self):
         return f'Message<{self.sequence}: source={self.source}, dest={self.dest}>'
@@ -92,6 +97,38 @@ class Message:
 # Define the Python classes for the above messages.
 # -----------------------------------------------------------------------------
 
+#proposal 1: Inherit from message
+class _ChatMessage(Message): # tight coupling
+    # cannot change the Message infor but if you donot know the Message
+    def __init__(self, source, dest,  player_id, text):
+        super().__init__(source, dest)
+        #self.message = Message(source, dest)
+        self.player_id = player_id
+        self.text = text
+
+msg1 = _ChatMessage(0, 1, 123, "Hello World")
+
+
+class ChatMessage:
+    def __init__(self, player_id, text):
+        self.player_id = player_id
+        self.text = text
+
+msg1 = Message(0,1, ChatMessage(123, "Hello World"))
+
+# proposal 2: Embed inside Message
+class PlayerUpdate:  # <<< Does not inherit from Message
+    def __init__(self, player_id, x, y):
+        self.player_id = player_id
+        self.x = x
+        self.y = y
+
+msg2 = Message(0, 1, PlayerUpdate(123, 10,20))
+
+# question: pick one ... why?
+# option2,  allows classes to vary independently
+# option1, less plumbing (maybe simpler)
+
 # -----------------------------------------------------------------------------
 # Exercise 3 - Message on a Wire
 #
@@ -117,13 +154,49 @@ class Message:
 # Note: This is a fairly open-ended problem that is fraught with peril.
 # -----------------------------------------------------------------------------
 
+from abc import ABC, abstractmethod
+class MessageCodec(ABC):
+    @abstractmethod
+    def encode(self, msg: Message) -> bytes:
+        pass
+    
+    @abstractmethod
+    def decode(self, data: bytes) -> Message:
+        pass
+
+#
+import pickle
+class PickleCodec(MessageCodec):
+    def encode(self, msg):
+        return pickle.dumps(msg)
+    
+    def decode(self, data):
+        return pickle.loads(data)
+
+import json
+class JSONCodec(MessageCodec):
+    def encode(self, msg):
+        # convert msg into dict
+        d = dict(msg.__dict__)
+        d['playload'] = dict(msg.payload.__dict__)
+        d['payload_type'] = type(msg.payload.__name__)
+        return json.dumps(d).encode('utf-8')
+        
+    def decode(self, data):
+        d = json.loads(data.decode('utf-8'))
+        payload_type= d.pop('payload_type')
+        payload = d['payload']
+        ...
+
 # The following "test" illustrates the basic requirements of encoding/decoding
 def test_serial():
-    m1 = ChatMessage(0, 1, 123, "Test Message")  # This might vary depending on (2) above
-    
+    #m1 = ChatMessage(0, 1, 123, "Test Message")  # This might vary depending on (2) above
+    m1 = Message(0, 1, ChatMessage(123, "Test Message"))
+
+    codec = PickleCodec()
     # You need to figure out the "encode" operation.  It can look different
     # than what's shown, but the final result must be bytes.
-    raw = encode(m1)
+    raw = codec.encode(m1)
 
     # The encoded message (whatever it is) must be bytes. Something that
     # can be transmitted somewhere else.
@@ -132,7 +205,7 @@ def test_serial():
     # The decode operation must accept bytes and recreate a message.
     # Again, this can look different than what's shown.  However, the
     # final result must be identical to the original message.
-    m2 = decode(raw)
+    m2 = codec.decode(raw)
 
     # The final message must be identical to the original message in
     # every way.  This includes the dest, source, sequence numbers,
@@ -143,7 +216,7 @@ def test_serial():
     assert pickle.dumps(m1) == pickle.dumps(m2)
 
 # Uncomment
-# test_serial()
+test_serial()
 
 # -----------------------------------------------------------------------------
 # Exercise 4 - There can be only one
@@ -182,24 +255,35 @@ class Dispatcher(ABC):
     '''
     Base class.  Do not create instances of this. Use a subclass.
     '''
+    _the_dispatcher = None   # the one dispatcher instance
     @abstractmethod
     def send(self, msg):
         pass
+
+def get_dispatcher():
+    return Dispatcher._the_dispatcher
+
+def register_dispatcher(dispatcher):
+    assert Dispatcher._the_dispatcher is None, "Dispatcher already set"
+    Dispatcher._the_dispatcher = dispatcher
 
 # Example of a child-class that simply prints messages.
 class SimpleDispatcher(Dispatcher):
     def send(self, msg):
         print('Sending:', msg)
 
+# Example: must take place in application startup/configuration
+register_dispatcher(SimpleDispatcher())
+
 # There must be some way to obtain/access the dispatcher object from 
 # any other code. Is getting the dispatcher the same as creating one?
 # What is the programming interface for this?
 def test_send():
-    d = ...                 # get the one true dispatcher somehow
+    d = get_dispatcher()     # get the one true dispatcher somehow
     d.send("Hello World")   # Send a message of some sort
 
 # Uncomment
-# test_send()
+test_send()
 
 # Thought:  How do you ensure that there is only one Dispatcher?
 

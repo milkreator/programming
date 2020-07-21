@@ -85,8 +85,8 @@ Most programmers never see the `__new__()` method.  That's something
 that's usually predefined and hidden behind the scenes.  A class
 normally only implements `__init__()`.
 
-Once the instance is alive, it carries an internal reference
-count. Assignment operations increase the reference count.
+**Once the instance is alive, it carries an internal reference
+count**. Assignment operations increase the reference count.
 
 ```
 a = Point(2, 3)     # a: refcount = 1
@@ -178,8 +178,8 @@ class Manager:
              # tb = Traceback
 ```
 
-A benefit of a context manager is that you get more precise control
-over resource use.  The `__exit__()` method will always be called when
+**A benefit of a context manager is that you get more precise control
+over resource use**.  The `__exit__()` method will always be called when
 control leaves a `with` block.  This is more predictable than relying
 on the invocation of `__del__()` during garbage collection.
 

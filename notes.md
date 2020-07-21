@@ -40,7 +40,7 @@
 
   * notes  
     - A.__mro__ -> # object's method resolution order  (in Inheritance)  
-    -  
+     
     - dis.dis(f)  
       + check the machine instructions  
 
@@ -51,13 +51,13 @@
   * TODO 
     - class  
 
-
-
 #### State machines 
 
 
+####  Functional programming
 
+#### Concurrency
 
-
+#### Linguistic abstraction  
 
 #### reference
