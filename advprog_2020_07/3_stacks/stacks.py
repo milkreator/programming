@@ -34,6 +34,42 @@
 #    >>>
 # -----------------------------------------------------------------------------
 
+# "abstract base clas"
+# not created diretly, inherited from
+from abc import ABC, abstractmethod
+class StackInterface(ABC):
+    # specification of what a stack has to provide
+    @abstractmethod
+    def push(self, item):
+        raise NotImplementedError()
+    @abstractmethod
+    def pop(self, item):
+        raise NotImplementedError()
+    @abstractmethod
+    def __len__(self):
+        raise NotImplementedError()
+
+# option1 : make a completely new class
+class Stack(StackInterface):
+    def __init__(self):
+        self.items = []
+
+    def push(self, item):
+        self.items.append(item)
+    
+    def pop(self):
+        return self.items.pop()
+
+    def __len__(self):
+        return len(self.items)
+
+#option2: inherit from list. list is almost a stack
+# bad. List have features that aren't stack-like
+"""
+class Stack(list):
+    push = list.append
+"""
+
 def test_stack():
     s = Stack()           # You need to define the Stack class
     s.push(23)
@@ -75,6 +111,48 @@ test_stack()
 # Some details have been left intentionally vague. How would you implement this?
 # -----------------------------------------------------------------------------
 
+class Calculator:  #class Calculator(Stack):
+    def __init__(self, stack=None):
+
+        # **could be reconfigured**
+        # Name: "Dependency Injection" 
+        # Idea: Calculator depends on a stack. 
+        # # Instead of making it hardwired, can be changed
+        if stack is None:
+            stack = Stack()
+
+        # can you guarantee that 'stack' is a properly defined stack?
+        assert isinstance(stack, StackInterface)
+
+        self.stack = stack
+    
+    # Delegation
+    def push(self, value):
+        self.stack.push(value)
+
+    def pop(self):
+        return self.stack.pop()
+
+    def add(self):
+        right = self.pop()
+        left = self.pop()
+        self.push(left + right)
+
+    def sub(self):
+        right = self.pop()
+        left = self.pop()
+        self.push(left - right)
+
+    def mul(self):
+        right = self.pop()
+        left = self.pop()
+        self.push(right * left)
+
+    def div(self):
+        right = self.pop()
+        left = self.pop()
+        self.push(left / right)
+
 def test_calculator(calc):
     calc.push(23)
     calc.push(45)
@@ -98,6 +176,10 @@ def test_calculator(calc):
     calc.div()
     assert calc.pop() == 2.0
     print("Good calculator!")
+
+#stack = Stack()
+calc = Calculator()
+test_calculator(calc)
 
 # For the above test, you need to create the "Calculator" instance s and pass 
 # it to the above test
@@ -141,8 +223,8 @@ def test_calculator(calc):
 # can test.
 # -----------------------------------------------------------------------------
 
-# An implementation of an "immutable" stack, built from tuples
-class ImmutableStack:
+# An implementation of an "immutable" stack, **built from tuples**
+class ImmutableStack(StackInterface):
     def __init__(self):
         self._items = None
         self._size = 0
@@ -160,7 +242,7 @@ class ImmutableStack:
         return self._size
 
 # An implementation of a "numeric" stack where items must be numbers
-class NumericStack:
+class _NumericStack(StackInterface):
     def __init__(self):
         self._items = []
         
@@ -174,6 +256,14 @@ class NumericStack:
     def __len__(self):
         return len(self._items)
 
+# DRY - only need to defien one function - push
+# need not copy all the same others
+class NumericStack(Stack):
+    def push(self, item):
+        assert isinstance(item, (int, float)), "Number is required"
+        super().push(item)
+
+
 # Figure out some way to use either one of these stacks with your 
 # calculator.  Make sure you can run the test_calculator() test and
 # that it works without modification.
@@ -181,13 +271,16 @@ class NumericStack:
 # test_calculator(... use ImmutableStack ...)
 # test_calculator(... use NumericStack ...)
 
+calc = Calculator(stack=ImmutableStack())
+test_calculator(calc)
+
 # -----------------------------------------------------------------------------
 # Exercise 4 - Interfaces
 #
 # When designing your Calculator class to work with any kind of stack,
-# the most important thing is the stack interface, not the precise
+# the most important thing is **the stack interface**, not the precise
 # stack implementation (that's data abstraction!). That is, you really
-# only care about the operations that are expected to be implemented
+# only care about **the operations** that are expected to be implemented
 # by a stack (e.g., push(), pop(), len(), etc.).
 #
 # How would design the Calculator class to enforce/document an
@@ -205,16 +298,44 @@ class NumericStack:
 # easily reduced to the following so-called "Mixin" class which would
 # work in combination with any other implementation of a Stack:
 
+#
 class NumericStackMixin:
     def push(self, item):
         assert isinstance(item, (float, int))
-        super().push(item)
+        super().push(item)  # __mro__
+#
 
 # Your challenge: Show how you would use this class in combination
 # with either of the other stack implementations to enforce items to
 # be numbers.  For example, how could you make an immutable numeric
 # stack?
 # -----------------------------------------------------------------------------
+
+# combine the two numeric and Immutable together
+class ImmutableNumericStack(NumericStackMixin,ImmutableStack):
+    pass
+
+# calc.__mro__ -> gi
+calc = Calculator(stack=ImmutableNumericStack())
+test_calculator(calc)
+
+class _ImmutableNumericStack():
+    def __init__(self):
+        self._items = None
+        self._size = 0
+
+    def push(self, item):
+        assert isinstance(item, (float, int)), "Number is required"
+        self._items = (item, self._items)
+        self._size += 1
+
+    def pop(self):
+        item, self._items = self._items
+        self._size -= 1
+        return item
+
+    def __len__(self):
+        return self._size
 
 # -----------------------------------------------------------------------------
 # Exercise 6 - The Machine
@@ -232,10 +353,38 @@ instructions = [
     ('add',),
 ]
 
+#     >>> s.push(2)
+#     >>> s.push(3)
+#     >>> s.push(4)
+#     >>> s.add()
+#     >>> s.mul()
+#     >>> s.pop()
+#     14
+
 class StackMachine:
-    ... # you define
+    #... # you define
+    def __init__(self):
+        self.calc = Calculator()
+    
     def run(self, instructions):
-        ... # you define
+        #... # you define
+        for op, *args in instructions:
+            getattr(self.calc, op)(*args) # dynamic dispatch
+            """
+            if op == 'push':
+                self.calc.push(*args)
+            elif op == 'pop':
+                self.calc.pop()
+            elif op == 'add':
+                self.calc.add()
+            elif op == 'sub':
+                self.calc.sub()
+            elif op == 'mul':
+                self.calc.mul()
+            elif op == 'div':
+                self.calc.div()
+            """
+        return self.calc.pop()
 
 def test_stack_machine():
     mach = StackMachine()    # Might need additional args
@@ -244,7 +393,7 @@ def test_stack_machine():
     print("Good machine!")
 
 # Uncomment
-# test_stack_machine()
+test_stack_machine()
 
 # -----------------------------------------------------------------------------
 # Exercise 7 - The Parser (Challenge)
@@ -254,7 +403,7 @@ def test_stack_machine():
 # Can't you make that work instead?"
 # 
 # Undeterred, you realize that Python has a standard library "ast" that
-# can be used to parse expression strings into a tree structure.  From
+# can be used to **parse expression strings into a tree structure**.  From
 # there, perhaps you can generate the appropriate stack instructions by
 # walking the tree.  For example, suppose you have a tree node representing
 # a binary operator like +:
@@ -275,9 +424,38 @@ def test_stack_machine():
 # a bit.  Think about how you might write code to traverse the tree
 # structure in some way.
 # -----------------------------------------------------------------------------
+import ast
+
+# alternative 1 visitor pattern
+class CodeVisitor:
+    def __init__(self):
+        self.code = []
+
+# althernative 2: singledispatch
+from functools import singledispatch
+
+def generate(node, code):
+    # case-analysis problem, how to avoid lots of ie-elif-else -> althernative 1, 2
+    if isinstance(node, ast.Num):
+        code.append(('push', node.n))
+    elif isinstance(node, ast.Add):
+        code.append(('add', ))
+    elif isinstance(node, ast.Sub):
+        code.append(('add', ))
+    elif isinstance(node, ast.Mult):
+        code.append(('add', ))
+    elif isinstance(node, ast.Div):
+        code.append(('add', ))
+    elif isinstance(node, ast.BinOp):
+        generate(node.left, code)
+        generate(node.right, code)
+        generate(node.op, code)
+    elif isinstance(node, ast.Expression):
+        generate(node.body, code)
+    
 
 def parse_challenge():
-    import ast
+    
     tree = ast.parse("1.0 + (2 * (3 - (4 / (5 + (6 * (7 - (8 / 9)))))))", mode='eval')
 
     # Study this output
@@ -285,6 +463,29 @@ def parse_challenge():
 
     # Make instructions (somehow)
     instructions = []
+    generate(tree, instructions)
+    #print(instructions)
+    """
+    instructions = [
+        ('push', 1.0),
+        ('push', 2),
+        ('push', 3),
+        ('push', 4),
+        ('push', 5),
+        ('push', 6),
+        ('push', 7),
+        ('push', 8),
+        ('push', 9),
+        ('div',),
+        ('sub',),
+        ('mul',),
+        ('add',),
+        ('div',),
+        ('sub',),
+        ('mul',),
+        ('add',)
+    ]
+    """
 
     # Run the instructions
     s = StackMachine()
@@ -292,7 +493,7 @@ def parse_challenge():
     print(result)
 
 # Uncomment
-# parse_challenge()    
+parse_challenge()    
 
 
 

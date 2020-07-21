@@ -36,8 +36,8 @@ use the `class` statement.  However, challenges start to arise once
 you realize that defining code in a class can serve different kinds of
 roles within a program.  For example, a class might define a
 "thing."  The `Player` class above is a good example of that.
-However, classes can also be used to describe a "behavior."  This is
-closely coupled to the idea of defining an "interface".  For example,
+However, classes can also be used to **describe a "behavior."**  This is
+closely coupled to the idea of **defining an "interface"**.  For example,
 you might define a class like this:
 
 ```
@@ -59,7 +59,7 @@ class Player(Movable):
     ...
 ```
 
-Such an inheritance relationship might be useful in type-checking or
+Such an inheritance relationship might be useful in **type-checking** or
 performing some sort of case-analysis. For example:
 
 ```
@@ -92,7 +92,7 @@ behavior of other existing classes.
 
 ## Abstract Base Classes
 
-The `abc` module is sometimes used to define interfaces.  For example:
+The `abc` module is sometimes used to **define interfaces**.  For example:
 
 ```
 from abc import ABC, abstractmethod
@@ -183,7 +183,7 @@ However, the order is the same order as classes are listed in
 ## getattr()
 
 Another method that's sometimes used on a class is `getattr()`.  This
-is sometimes used as an alternative mechanism of attribute lookup.
+is sometimes used as an alternative mechanism of **attribute lookup**.
 For example:
 
 ```
