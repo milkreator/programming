@@ -1,8 +1,8 @@
 # -----------------------------------------------------------------------------
 # elevator.py
 #
-# Certain problems often involve the implementation of "state
-# machines."  For example, consider the operation of an elevator.  At
+# Certain problems often involve the implementation of **"state
+# machines."**  For example, consider the operation of an elevator.  At
 # any given moment, the elevator is in a certain "operational state".
 # For example, it's positioned at a given floor and it's either
 # idle, loading passengers, or moving. The doors are open or closed.
@@ -61,27 +61,204 @@
 # So, you've got to figure out how to implement the elevator control
 # software without any first-hand knowledge of its deployment
 # environment or the laws of physics.  Naturally, the lack of
-# information means that your implementation will need to be
-# extended/embedded in some other software (not shown/provided) to be
+# information means that **your implementation will need to be
+# extended/embedded in some other software** (not shown/provided) to be
 # used in the real world.  It also means that your understanding
 # of the problem might be incomplete--you should write the code
 # in anticipation of new unforeseen "requirements."
 # -----------------------------------------------------------------------------
 
-# A Hint: It might make sense to separate the problem into separate
-# concerns.  For example, perhaps you define an "Elevator" class that
+# A Hint: It might make sense to **separate the problem into separate
+# concerns**.  For example, perhaps you define an "Elevator" class that
 # deals with the logic of the elevator and a "ElevatorControl" class
 # that is focused on its interaction with "real" world elements.  For
 # example:
 
 class Elevator:
     # Logic of the elevator
+
+    # make the __init__ function **take default args** for all elements of
+    # internal state. useful for later testing. 
+    #  for a very specific state. and then exectue an envent and watch what happens
+    def  __init__(self, mode='IDLE', floor = 1, final_floor = None, 
+                        direction = None, destinations=None,
+                        up_requests = None, down_requests=None):
+        self.mode = mode if mode else IdleMode     # {IDLE, MOVING, LOADING}
+        self. floor = floor
+        self.final_floor = final_floor             # current floor
+        #self.direction = direction
+        self.destinations = set()  if destinations is None else destinations # ALL DESTINATION BUTTONS PRESSED
+        self.up_requests = set() if up_requests is None else up_requests
+        self.down_requests = set() if down_requests is None else down_requests
+
+    # define a useful __repr__() method so that you can look at it with print() and for debugging
+    def __repr__(self):
+        return f'Elevator({self.mode}, {self.floor}, {self.final_floor}, {sorted(self.destinations)},\
+        {sorted(self.up_requests)}, {sorted(self.down_requests)})'
+   
+    def update_final_floor(self, floor_request):
+        # if no final floor, we'll just assign it to the new request.
+        if self.final_floor is None:
+            self.final_floor = floor_request
+
+        # if elevator is below it's final floor and an even higher floor request
+        # arrrive, update
+        if self.floor < self.final_floor and floor_request > self.final_floor:
+            self.final_floor = floor_request
+
+        # if elevator is above its final floor and an even lower floor request
+        # arrives, make that the final floor
+        elif self.floor > self.final_floor and floor_request < self.final_floor:
+            self.final_floor = floor_request
+
+    def engage_motor(self, control):
+        if self.final_floor > self.floor:
+            control.hoist_motor('up')
+        elif self.final_floor < self.floor:
+            control.hoist_motor('down')
+        self.mode = MovingMode
+
+    
+    # define "event handler" methods 
+    def down_button_pressed(self, floor, control):
+        self.mode.down_button_pressed(self, floor, control)
+    
+    def up_button_pressed(self, floor, control):
+        self.mode.up_button_pressed(self, floor, control)
+
     def destination_button_pressed(self, floor, control):
+        self.mode.destination_button_pressed(self, floor, control)
+
+    def floor_sensor(self, floor, control):
+        self.mode.floor_sensor(self, floor, control)
+
+    def timer_expired(self):
+        self.mode.time_expired(self, floor, control)
+        #raise RuntimeError("should not happen")
+
+# customer defined
+# # Operational mode classes.  You implement the logic for each event.
+# operational mode classes, the elev arg here is actually the Elevator instance above
+class IdleMode:
+    def down_button_pressed(elev, floor, control):
+        # someone pressed a  "down" button in the hallway
+        
+        if floor == elev.floor:
+            # the elevator is already on the floor. open the door and load
+            control.door_control("open")
+            control.set_time(10)
+            selelevf.mode = LoadingMode
+            #self.door_requests.discard(floor)
+        else:
+            elev.update_final_floor(floor)
+            elev.engage_motor(control)
+            elev.mode = MovingMode
+
+    def up_button_pressed(elev, floor, control):
+        if floor == elev.floor:
+            control.door_control('open')
+            control.set_timer(10)
+            elev.mode = LoadingMode
+        else:
+            elev.up_requests.add(floor)
+            elev.update_final_floor(floor)
+            elev.engage_motor(control)
+
+    def destination_button_pressed(elev, floor, control):
+        if floor == elev.floor:
+            control.door_control('open')
+            control.set_timer(10)
+            elev.mode = LoadingMode
+        else:
+            elev.destinations.add(floor)
+            elev.update_final_floor(floor)
+            elev.engage_motor(control)
+    
+    def floor_sensor(elev, floor, control):
+        raise RuntimeError("Should not happen")
+   
+    def timer_expired(elev):
+        raise RuntimeError("should not happen")
+    
+
+class MovingMode:
+    def down_button_pressed(self, floor, control):
+        ...
+
+    def up_button_pressed(self, floor, control):
+        ...
+
+class LoadingMode:
+    ...
+
+
+# old code
+if 0:
+    def down_button_pressed(self,  floor, control):
+        # someone pressed a  "down" button in the hallway
+        self.down_requests.add(floor)
+
+        if self.mode == "IDLE":
+            if floor == self.floor:
+                # the elevator is already on the floor. open the door and load
+                control.door_control("open")
+                control.set_time(10)
+                self.mode = 'LOADING'
+                #self.door_requests.discard(floor)
+            else:
+                self.update_final_floor(floor)
+                self.engage_motor(control)
+                self.mode = 'MOVING'
+            """
+            elif floor > self.floor:
+                control.hoist_motor("up")
+                self.mode = 'MOVING'
+            elif floor < self.floor:
+                control.hoist_motor("down")
+                self.mode = 'MOVING'
+            """
+
+    def up_button_pressed(self, floor, control):
+        # someone pressed a  "up" button in the hallway
+        self.up_requests.add(floor)
+
+        ...
+
+
+    def destination_button_pressed(self, floor, control):
+        # someone pressed a button inside the elevator  
         # Figure out what to do next
-        ...  
-        ...        
+        self.destinations.add(floor)
+
+        if self.mode == "IDLE":
+            ...
+        elif self.mode == 'MOVING':
+            ...
+        elif self.mode == 'LOADING':
+            ...
+             
         # Issue a control command
         control.hoist_motor("up")
+
+    def timer_expired(self):
+        #timer that expires  after the doors have been open for a while
+        if self.mode == 'LOADING':
+            ...
+        else:
+            # the timer is only used to keep the doors open when loading
+            raise RuntimeError("should not happen")
+        
+
+    def floor_sensor(self, floor):
+        # sensor in the elevator shaft to indicate the elevator is at a certain floor
+        if self.mode == 'MOVING':
+            ...
+        else:
+            # floor sensors are only tripped while elevator is in motion. 
+            # should not happen if elevator is idle or wrong 
+            raise RuntimeError("should not happen")
+
+
 
 from abc import ABC, abstractmethod
 
@@ -96,9 +273,48 @@ class ElevatorControl(ABC):
     def door_control(self, command):
         pass
 
+    @abstractmethod
+    def set_timer(self, timer):
+        pass
+
+
+class DebugElevatorControl(ElevatorControl):
+    def hoist_motor(self, command):
+        print("hoist_motor:", command)
+
+    def door_control(self, command):
+        print("door_contorl:", command)
+        
+    def set_timer(self, seconds):
+        print("set_timer:", seconds)
+
+
+class MockElevatorControl(ElevatorControl):
+    def __init__(self):
+        self.commands = []
+
+    def hoist_motor(self, command):
+        self.commands.append(('hoist', command)) 
+
+    def door_control(self, command):
+        self.commands.append(('door', command)) 
+
+    def set_timer(self, seconds):
+        self.commands.append(('timer', seconds))  
+
+# Unit Test
+def test_idle_move():
+    elev = Elevator(mode=IdleMode, floor=1)
+    control = MockElevatorControl()
+    elev.down_button_pressed(3, control)
+    assert control.commands == [('hoist', 'up')]
+    assert elev.mode == MovingMode
+    assert 3 in elev.down_requests  
+
+test_idle_move()
 
 # -----------------------------------------------------------------------------
-# The Testing Challenge
+# The Testing Challenge - verify 
 #
 # One issue with the elevator software is the problem of testing it.
 # Yes, you can probably write some unit tests for selected parts of

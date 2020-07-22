@@ -1,15 +1,15 @@
 # It's All About Time
 
-This project starts our journey into thinking about time. In this
-case, you're tasked with writing software for an event-driven
-system. A major challenge is figuring out how to structure the 
-parts in a way that allow the code to be adapted and tested.
+This project starts our journey into thinking about **time**. In this
+case, you're tasked with writing software for **an event-driven
+system**. A major challenge is figuring out **how to structure the 
+parts in a way** that allow the code to be adapted and tested.
 
 ## Stateful Objects
 
 Part of this project involves the design and implementation of a
 "stateful object."  In this context, a "stateful object" refers to the
-idea that an object might have different operational modes.  Here is a
+idea that **an object might have different operational modes**.  Here is a
 very simple example:
 
 ```
@@ -36,6 +36,40 @@ class Connection:
         if not self.state != 'OPEN':
             raise RuntimeError('Connection not open')
         print('Sending')
+```
+
+```
+# state machine pattern  
+class Connection:
+    def __init__(self):
+        self.mode = ClosedMode
+
+    def open(self):
+        self.mode = OpenMode
+
+    def close(self):
+        self.mode = ClosedMode    # Mode is not an "instance"
+
+    def receive(self):
+        self.mode.receive(self)   # The "Connection" instance is passed as the self to the mode methods.
+
+    def send(self):
+        self.mode.send(self)
+
+class ClosedMode:
+    def receive(self):
+        raise RuntimeError("Closed")
+
+    def send(self):
+        raise RuntimeError("Closed")
+
+class OpenMode:
+    def receive(self):
+        print('Receiving')
+
+    def send(self):
+        print('Sending')
+        
 ```
 
 In this class, the behavior of each method varies according to an

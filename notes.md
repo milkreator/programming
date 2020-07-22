@@ -48,10 +48,34 @@
     - how does python work exactly?  the stackmachine  
       + form the basis of a simple virtual machine that executes an instruction sequence
 
+  * inheritance  
+    - extensibility -> many ways to do sth? many targets? 
+
+       + interfaces  .  abstract base classes
+
+    - sketchy.  implementation inheritance  
+       + inherit from existing object to get functionality, then add new funcitonality  
+       + inheriting from list, dict, etc... 
+       + could get unintended behavior/side effects 
+
+    - composition.  "is a " vs " has a" relationship  
+       + car is an engine -> inheritance
+       + car has an engine ->
+
+
+    - Mixins -- modifier/behavior 
+       + "Turbocharger on the engine" 
+
+    - History on python  
+       + current inheritance: "C3 linearization algorithm" 
+       + 
+
   * TODO 
     - class  
 
 #### State machines 
+  * Writing down lots of comments with thoughts/assumptions/details may be useful in this project.
+
 
 
 ####  Functional programming

@@ -99,7 +99,7 @@ class Message:
 
 #proposal 1: Inherit from message
 class _ChatMessage(Message): # tight coupling
-    # cannot change the Message infor but if you donot know the Message
+    # **cannot change the Message inor butf if you donot know the Message**
     def __init__(self, source, dest,  player_id, text):
         super().__init__(source, dest)
         #self.message = Message(source, dest)
