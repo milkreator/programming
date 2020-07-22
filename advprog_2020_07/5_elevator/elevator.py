@@ -408,3 +408,10 @@ def next_elevators(elev, control:MockElevatorControl):
     # 5. if a timer is set, it could expire
     if control.timer is not None:
         elev.timer_expired(control)
+
+
+def simulate():
+    init = Elevator()
+    control = MockElevatorControl()
+
+    ...

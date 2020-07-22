@@ -79,6 +79,15 @@
     - how to separate the functions  
     - how to test it 
 
+  * object-oriented design -> decouple components, make extensible, etc.  
+    - cloasely related: Model-View Control pattern  
+
+  * make code testable/debuggable  
+
+  * simulation: Model Checking  
+    - related tools: TLA+, Alloy, Spin, etc...
+    - Formal verification  
+
   * Writing down lots of comments with thoughts/assumptions/details may be useful in this project.
 
 
