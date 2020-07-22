@@ -74,6 +74,11 @@
     - class  
 
 #### State machines 
+  *  how to design the soluton, and how to split the work into diff classes 
+    - logic + control   
+    - how to separate the functions  
+    - how to test it 
+
   * Writing down lots of comments with thoughts/assumptions/details may be useful in this project.
 
 

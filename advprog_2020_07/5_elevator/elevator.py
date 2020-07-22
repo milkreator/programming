@@ -114,9 +114,12 @@ class Elevator:
     def engage_motor(self, control):
         if self.final_floor > self.floor:
             control.hoist_motor('up')
+            self.mdoe = MovingMode
         elif self.final_floor < self.floor:
             control.hoist_motor('down')
-        self.mode = MovingMode
+            self.mode = MovingMode
+        else:
+            self.mode = IdleMode
 
     
     # define "event handler" methods 
@@ -139,6 +142,15 @@ class Elevator:
 # customer defined
 # # Operational mode classes.  You implement the logic for each event.
 # operational mode classes, the elev arg here is actually the Elevator instance above
+
+_events = ['down_button_pressed', 'up_button_pressed']
+
+class ModeBase:
+    @classmethod
+    def __init_subclass__(cls):
+        for name in _events:
+            assert hasattr(cls, name), f'{name} event not handled'
+
 class IdleMode:
     def down_button_pressed(elev, floor, control):
         # someone pressed a  "down" button in the hallway
@@ -147,12 +159,13 @@ class IdleMode:
             # the elevator is already on the floor. open the door and load
             control.door_control("open")
             control.set_time(10)
-            selelevf.mode = LoadingMode
+            elev.mode = LoadingMode
             #self.door_requests.discard(floor)
         else:
+            elev.down_requests.add(floor)
             elev.update_final_floor(floor)
             elev.engage_motor(control)
-            elev.mode = MovingMode
+            #elev.mode = MovingMode
 
     def up_button_pressed(elev, floor, control):
         if floor == elev.floor:
@@ -182,10 +195,11 @@ class IdleMode:
     
 
 class MovingMode:
-    def down_button_pressed(self, floor, control):
-        ...
+    def down_button_pressed(elev, floor, control):
+        elev.down_requests.add(floor)
+        elev.update_final_floor(floor)
 
-    def up_button_pressed(self, floor, control):
+    def up_button_pressed(elev, floor, control):
         ...
 
 class LoadingMode:
@@ -221,7 +235,6 @@ if 0:
     def up_button_pressed(self, floor, control):
         # someone pressed a  "up" button in the hallway
         self.up_requests.add(floor)
-
         ...
 
 
@@ -290,24 +303,45 @@ class DebugElevatorControl(ElevatorControl):
 
 
 class MockElevatorControl(ElevatorControl):
-    def __init__(self):
-        self.commands = []
+    def __init__(self, motor_state='off', door_state='closed', timer=None):
+        self.motor_state = motor_state
+        self.door_state = door_state
+        self.timer = timer
+        #self.commands = []
+    
+    def __repr__(self):
+        return f'MockElevatorControl({self.motor_state}, {self.door_state}, {self.timer})'
+
+    def invariants(self):
+        assert not (self.door_state == 'open' and self.motor_state != 'off')
 
     def hoist_motor(self, command):
-        self.commands.append(('hoist', command)) 
+        #self.commands.append(('hoist', command)) 
+        assert command in {'up', 'down', 'off'}
+        self.motor_state = command
+        self.invariants()
 
     def door_control(self, command):
-        self.commands.append(('door', command)) 
+        #self.commands.append(('door', command)) 
+        assert command in {'open', 'close'}
+        self.door_state= command
+        self.invariants()
 
     def set_timer(self, seconds):
-        self.commands.append(('timer', seconds))  
+        #self.commands.append(('timer', seconds))  
+        assert seconds is None or seconds > 0
+        self.timer = seconds
 
 # Unit Test
 def test_idle_move():
+    # logic ->  the logic of the elevator 
     elev = Elevator(mode=IdleMode, floor=1)
+    # controller -> focused on its interaction with "real" world elements 
     control = MockElevatorControl()
+    # 
     elev.down_button_pressed(3, control)
-    assert control.commands == [('hoist', 'up')]
+    # assert control.commands == [('hoist', 'up')]
+    assert control.motor_state == 'up'
     assert elev.mode == MovingMode
     assert 3 in elev.down_requests  
 
@@ -348,4 +382,29 @@ test_idle_move()
 # accept it.
 #
 
+#  verify
+#elev = Elevator()
+#control = MockElevatorControl()
 
+def next_elevators(elev, control:MockElevatorControl):
+    # Idea .
+    # Given an elevator and controller, figure out every possible "next"
+    # elevator that you could have
+
+    # think about events ... what events could happen  
+
+    # 1. destination buttons inside the elevator
+    for floor in range(1,6):
+        elev.destination_button_press(floor, control)
+
+    # 2. up requests get pressed
+    for floor in range(1,5):
+        elev.up_button_press(floor, control)
+
+    # 3. down requests get pressed
+
+    # 4. if the controller motor is on, could floor sensor trip
+
+    # 5. if a timer is set, it could expire
+    if control.timer is not None:
+        elev.timer_expired(control)
