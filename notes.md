@@ -95,9 +95,12 @@
   * higher-order functions 
     - **functions are data**, can be passed around, retuned, etc.  
 
-  * 
+  * checked Exceptions    
 
-#### Concurrency
+#### Concurrency  
+
+  * asyncio  
+  
 
 #### Linguistic abstraction  
 

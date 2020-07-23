@@ -26,8 +26,28 @@ def countup(stop):
 # Normally, functions executed sequentially.  For example, observe
 # the output of the following code.
 
-countdown(15)
+countdown(10)
 countup(5)
+
+import threading  # concurrent exectution (both function are making progress)
+t1 = threading.Thread(target=countdown, args=(10,))
+t1.start()
+
+t2 = threading.Thread(target=countup, args=(5,))
+t2.start()
+
+"""
+import queue
+q = queue.Queue()
+def consumer(q):
+    while True:
+        item = q.get()
+        print("processing:", item)
+
+threading.Thread(target=consumer, args=(q,)).start()
+q.put("hello")
+q.put("world")
+"""
 
 # -----------------------------------------------------------------------------
 # Exercise 1 - Concurrency
@@ -62,6 +82,62 @@ countup(5)
 # and to write any other supporting code you might need to do it--as
 # long as that support code only involves normal Python functions.
 
+
+# idea
+# main thing: both functions need to make progress at the same time
+# which means that you have to somehow switch back and forth between them 
+#
+
+from collections import deque
+_pending= deque()  #functions that need to be called
+
+
+# list : [xx | | | |] # removing first item(all other items get copied to fill hole)
+# deque: [ ] -> [ ] -> [ ] -> [ ]
+def call_soon(func):
+    _pending.append(func)
+
+def run():
+    while _pending or _scheduled:
+        if not _pending:
+            # Sleep until the next deadline.
+            deadline, func = _scheduled.pop(0)
+            delta = deadline - time.time()
+            if delta > 0:
+                time.sleep(delta)
+            _pending.append(func)
+
+        f=_pending.popleft()  # get first function
+        f()
+    
+def countdown(n):
+    #while n > 0:
+    if n > 0:
+        print('T-minus', n)
+        time.sleep(1)
+        #n -= 1
+        #
+        call_soon(lambda: countdown(n-1)) # doesn't call the function, jsut schedules it
+
+def countup(stop):
+    def _countup(x):  # need to carry the state of "x" forward to the next step
+        if x < stop:
+            print('Up we go', x)
+            time.sleep(3)
+        call_soon(lambda: _countup(x+1))
+    _countup(0)
+    """
+    x = 0
+    #while x < stop:
+    print('Up we go', x)
+    time.sleep(3)
+    x += 1
+    """
+
+call_soon(lambda: countdown(15))   
+call_soon(lambda:countup(5)) 
+
+run()
 # -----------------------------------------------------------------------------
 # Exercise 2 - Sleeping
 #
@@ -111,26 +187,61 @@ countup(5)
 # You are not allowed to use any existing Python libraries.  And certainly
 # not the built-in threading or queue modules.
 
+class Queue:
+    def __init__(self):
+        self.items = deque()
+        self.waiting = deque() #callbacks wiaiting for queue items
+
+    # this connect the producer and the consumer 
+    def put(self, item):
+        self.items.append(item)
+        if self.waiting:
+            self.get(self.waiting.popleft())
+
+    def get(self, callback):
+        if self.items:
+            item = self.items.popleft() # remove
+            call_soon(lambda:callback(item))
+        else:
+            self.waiting.append(callback)
+
+_scheduled = [ ]
+def call_later(delay, func):
+    when = time.time() + delay
+          #  current time 
+    _scheduled.append((when, func))
+    _scheduled.sort(key=lambda s: s[0])    # Could be better
+
 def producer(q):
-    for i in range(5):
-        print('Producing', i)
-        q.put(i)
-        time.sleep(1)            
-    q.put(None)
-    print('Producer done')
+    def _produce(i):
+        if i<5:
+            print('Producing', i)
+            q.put(i)
+            #time.sleep(1)    # NO Blocking
+            call_later(1, lambda: _produce(i+1)) 
+        else:
+            q.put(None)
+            print('Producer done')
+    _produce(0)
 
 def consumer(q):
-    while True:
-        item = q.get()
+    def _got_it(item):
         if item is None:
-            break
-        print('Consuming', item)
-    print('Consumer done')
+            print('Consumer done')
+        else:
+            print('Consumed', item)
+            q.get(_got_it)
+    q.get(_got_it)
+    
 
 def test_prod_cons():
     q = Queue()       # You must define
-    run(producer(q))  # Pseudocode
-    run(consumer(q))  # Pseudocode
+    
+    call_soon(lambda: producer(q))
+    call_soon(lambda: consumer(q))
+    run()
+
+test_prod_cons()
 
 # The expected output of the program is as follows:
 #

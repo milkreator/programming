@@ -389,7 +389,7 @@ def delayed_results():
 # Note: This is also a nuanced problem with many complexities.
 #
 # Uncomment when ready
-delayed_results()
+#delayed_results()
 
 
 # idea:  
@@ -397,7 +397,7 @@ delayed_results()
 #  launch a thread and arrange to have the reuslut put in the box
 #  open the box when the thread is done. 
 
-
+delayed_results()
 
 
 
