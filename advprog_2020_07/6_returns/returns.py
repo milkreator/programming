@@ -33,6 +33,8 @@ def greeting():
 
 # How do you use the greeting() function with the after() function above?
 # That is, have the after() function call greeting() after 10 seconds.
+after(10, greeting)
+
 
 # -----------------------------------------------------------------------------
 # Exercise 2
@@ -48,7 +50,10 @@ def add(x, y):
 
 # This doesn't work. Why?  Can you fix it in some way?
 # result = after(10, add(2, 3))            # Uncomment
-
+    
+#result = after(10, add(2, 3))
+result = after(10, lambda: add(2,3))  #using lambda to force the expected #arguments(0)
+print(result)
 
 # -----------------------------------------------------------------------------
 # Exercise 3
@@ -92,11 +97,19 @@ def add(x, y):
 
 # Modify this function as appropriate to make it possible to call a
 # function with any combination of arguments:
-
-def after(seconds, func):
+def after_origin(seconds, func):
     time.sleep(seconds)
     return func()
 
+def after(seconds, func, *args, **kwargs):
+    time.sleep(seconds)
+    return func(*args, **kwargs)
+"""
+TODO
+def after(seconds, func, /, *args, **kwargs):
+    time.sleep(seconds)
+    return func(*args, **kwargs)
+"""
 # Show how you would call the following functions with your modified after()
 # function.  A solution involving lambda is shown below.  You're allowed to
 # change any part of this that you want.
@@ -106,7 +119,8 @@ def add(x, y):
     print(f'Adding {x} + {y} -> {x + y}')
     return x + y
 
-# after(10, lambda: add(2, 3))
+#after(10, lambda: add(2, 3))
+after(10, add, 2, 3)
 
 # Simple function taking keyword-only  arguments
 def duration(*, hours, minutes, seconds):
@@ -114,8 +128,9 @@ def duration(*, hours, minutes, seconds):
     print('Duration:', x)
     return x
 
-# d = after(10, lambda: duration(hours=2, minutes=5, seconds=37))
-
+d = after(10, lambda: duration(hours=2, minutes=5, seconds=37))
+#d = after(10, duration, hours=2, minutes=5, seconds=37)
+print(d)
 # -----------------------------------------------------------------------------
 # Exercise 4
 #
@@ -141,8 +156,24 @@ def duration(*, hours, minutes, seconds):
 # Hint: One way to organize exceptions is to define and use a custom exception.
 # -----------------------------------------------------------------------------
 
+# BaseException - used for certain errors almost never caught (SystemExit, KeyboardInterrupt)
+
+class AfterException(Exception):  # Use Excption for all program-related errors
+    pass
+
 def after(seconds, func):
-    ...
+    time.sleep(seconds)
+    # return func() or raises AfterException
+    try:
+        return func()
+    except Exception as err:  #catch all exceptions
+        raise AfterException("it failed") from err #chained excetption (exception caused from another)
+
+# example
+try:
+    result = after(10, lambda: add("2", 3))
+except AfterException as err:    # every failure of func() is caught
+    print("Reason:", err.__cause__)  # err.__cause__ is the original exception (the TypeError)
 
 # -----------------------------------------------------------------------------
 # Exercise 5
@@ -173,13 +204,27 @@ def after(seconds, func):
 # -----------------------------------------------------------------------------
 
 class Result:
-    def unwrap(self):
-        ...
-        # Return the actual result or raise an exception
+    # Return the actual result or raise an exception
 
-def after(seconds:float, func) -> Result:
-    ...
-    return Result(...)
+    def __init__(self, val, exc):
+        self.val = val   #value
+        self.exc = exc   # exception
+
+    def unwrap(self):
+        if self.exc:
+            raise self.exc
+        else:
+            return self.val
+
+
+def after(seconds:float, func, *args) -> Result:
+    time.sleep(seconds)
+    try:
+        return Result(func(*args), None)
+    except Exception as err:
+        return Result(None, err)
+
+result = after(5, lambda: add("2", 3))  #
 
 # -----------------------------------------------------------------------------
 # Exercise 6 - "The Chain"
@@ -228,10 +273,10 @@ assert chained(2) == 576
 # work with the after() function in Exercise 5.
 
 def chained_after(x:int) -> int:
-    a = after(1, A(x))     # Call a = A(x) after 1 second   (must modify)
-    b = after(2, B(a))     # Call b = B(a), 2 seconds after that (must modify)
-    c = after(3, C(b))     # Call c = C(b), 3 seconds after that (must modify)
-    return c
+    a = after(1, lambda: A(x))     # Call a = A(x) after 1 second   (must modify)
+    b = after(2, lambda: B(a.unwrap()))     # Call b = B(a), 2 seconds after that (must modify)
+    c = after(3, lambda: C(b.unwrap()))    # Call c = C(b), 3 seconds after that (must modify)
+    return c.unwrap()
 
 # assert chained_after(2) == 576        # Uncomment
 
@@ -241,23 +286,61 @@ def chained_after(x:int) -> int:
 #def chained_after(x):
 #    return ... # everything above as a single statement
 #
+def chained_after_2(x):
+    #  "wrong"
+    #return after(3, lambda: C(after(2, lambda: B(after(1, lambda: A(x))).unwrap())).unwrap()).unwrap()
+    # return C(B(A(x)))
+    ... 
+
 
 # -----------------------------------------------------------------------------
 # Exercise 7.
 #
 # "The Concurrent." Although Mary has been pondering the after()
 # function, it turns out that her real task is a bit more complicated.
-# What she *really* wants to implement is a delayed function evaluator
+# What she *really* wants to implement is **a delayed function evaluator**
 # that allows other parts of the program to run while the delayed
 # function works in the background.   For this, she's decided to
 # use threads.   Here's an example:
-
 import threading
+
+class Result:
+    # Return the actual result or raise an exception
+
+    def __init__(self):
+        self.val = None   #value
+        self.exc = None   # exception
+        self.evt = threading.Event()
+
+    def set_result(self, val, exc):
+        self.val = val
+        self.exc = exc
+        self.evt.set()
+
+    def unwrap(self):
+        self.evt.wait()  # wait for setting
+        if self.exc:
+            raise self.exc
+        else:
+            return self.val
+
 def delayed(seconds, func):
+    # create a 'box' in advance. it has nothing inside
+    result = Result()
     def helper():
         time.sleep(seconds)
-        return func()
+        try:
+            #put the result in the box
+            result.set_result(func(), None) #val = func()
+        except Exception as err:
+            result.set_result(None, err)
+        #return func()  # the basic problem is that this result disappears into a black hole
+    
+    # launch thread. It runs in the background
     threading.Thread(target=helper).start()
+
+    # immediately return the empty box
+    return result
 
 # If you haven't used threads before, the key idea is that a
 # thread runs a function independently, and concurrently, with other
@@ -279,7 +362,7 @@ def delayed_example():
         n -=1
         
 # Uncomment.  See what the above code produces.
-# delayed_example()     
+delayed_example()     
 
 # This is all fine, but actually the problem is more complex.
 # You see, Mary actually wants to be able to get a result back
@@ -289,15 +372,15 @@ def delayed_example():
 def delayed_results():
     r1 = delayed(3, lambda: add(2, 3))
     r2 = delayed(5, lambda: add(4, 5))
-    f3 = delayed(7, lambda: add(6, 7))
+    r3 = delayed(7, lambda: add(6, 7))
     n = 10
     while n > 0:
         print('T-minus', n)
         time.sleep(1)
         n -=1
-    print("r1=", r1)     # --> 5
-    print("r2=", r2)     # --> 9
-    print("r3=", r3)     # --> 13
+    print("r1=", r1.unwrap())     # --> 5
+    print("r2=", r2.unwrap())     # --> 9
+    print("r3=", r3.unwrap())     # --> 13
 
 # Your challenge:  How would you design and/or change the delayed()
 # function to have it return a proper result from the delayed
@@ -306,9 +389,13 @@ def delayed_results():
 # Note: This is also a nuanced problem with many complexities.
 #
 # Uncomment when ready
-# delayed_results()
+delayed_results()
 
 
+# idea:  
+#  create a box (Result) in advance ...
+#  launch a thread and arrange to have the reuslut put in the box
+#  open the box when the thread is done. 
 
 
 

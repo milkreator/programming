@@ -91,8 +91,11 @@
   * Writing down lots of comments with thoughts/assumptions/details may be useful in this project.
 
 
+####  Functional programming  
+  * higher-order functions 
+    - **functions are data**, can be passed around, retuned, etc.  
 
-####  Functional programming
+  * 
 
 #### Concurrency
 

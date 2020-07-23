@@ -3,7 +3,7 @@
 Up to this point, a lot of our discussion has focused on objects and
 the way in which objects can be put together (inheritance,
 composition, etc.).  However, a similar focus on "composition" can
-also be applied to functions.  For example, functions can be passed
+also be applied to **functions**.  For example, functions can be passed
 around and interact with other functions in unusual ways.  Studying
 this interaction is often at the foundation of a lot of "functional
 programming."
@@ -31,7 +31,7 @@ enough. Well, until it's not.
 
 ## Higher Order Functions
 
-Functions can be passed around as data, just like numbers or strings.
+Functions can be passed around **as data**, just like numbers or strings.
 So, a function can be passed as an argument to another function.  For
 example:
 
@@ -62,7 +62,7 @@ g(30)   # -> 40
 When returning a function, it remembers values from the definition
 environment.  So the `g()` function above remembers the value of
 `delta` that was provided to `make_adder()`.  This is sometimes known
-as a "closure."
+as a "**closure**."
 
 ## Composition of Functions
 
