@@ -272,7 +272,7 @@ async def test_areceiver():
     print('Good async receiver!')
 
 # Uncomment to run the above test
-asyncio.run(test_areceiver())
+#asyncio.run(test_areceiver())
 
 # -----------------------------------------------------------------------------
 # Exercise 4 - **DRY (Don't Repeat Yourself)** (Don't Repeat Yourself)
@@ -314,3 +314,87 @@ asyncio.run(test_areceiver())
 #
 # Note: Implementing I/O-independent protocols is increasingly common
 # in Python.  See https://sans-io.readthedocs.io.
+
+class MessageDecoder:
+    # idea
+    # an object that has received data fed to it.
+    # it then produces messages  (if any)
+    #
+    def __init__(self):
+        self.buffer = bytearray()
+
+    def feed(self, data):
+        self.buffer.extend(data)  # where data comes from? no idea
+
+    def messages(self):
+        #produce all messages that can be found in the data so far
+        #
+        # A message must have at least 2 complete lines of text in it
+        #  <message type>\r\n
+        #  <message size>\r\n
+        # if we don't have this, we have to read more data until we at least have that
+        while self.buffer.count(b'\r\n') >= 2:
+            b_msgtype, b_msgsz, remaining = self.buffer.split(b'\r\n', 2)
+            msgsz = int(b_msgsz)
+            if len(remaining) < msgsz:  # incomplete payload. keep reading data
+                return
+            b_playload = remaining[:msgsz]
+            self.buffer = remaining[msgsz:]
+            
+            # Reconstitute a message from the data (you implement)
+            yield recreate_message(b_msgtype.decode('utf-8'), b_playload.decode('utf-8'))
+
+def receive_messages(sock):
+    print("NEW receive_messages")
+    decoder = MessageDecoder()
+    while True:
+        # produce message
+        for msg in decoder.messages():
+            yield msg
+        chunk = sock.recv(100000)
+        if chunk == b'':
+            break
+        decoder.feed(chunk)  # feed the data
+
+async def areceive_messages(sock):
+    loop = asyncio.get_event_loop()
+    print("NEW receive_messages")
+    decoder = MessageDecoder()
+    while True:
+        for msg in decoder.messages():
+            yield msg
+        chunk = sock.recv(100000)
+        if chunk == b'':
+            break
+        decoder.feed(chunk)
+
+test_receiver()
+asyncio.run(test_areceiver())
+
+
+def _receive_messages(sock):
+
+    buffer = bytearray()
+    while True:
+        # A message must have at least 2 complete lines of text in it
+        #  <message type>\r\n
+        #  <message size>\r\n
+        # if we don't have this, we have to read more data
+        while buffer.count(b'\r\n') < 2:
+            chunk = ... #
+            if not chunk:
+                break
+            buffer.extend(chunk)
+
+        b_msgtype, b_msgsz, buffer = buffer.split(b'\r\n', 2)
+        msgsz = int(b_msgsz)
+        while len(buffer) < msgsz:  # incomplete payload. keep reading data
+            chunk = ... #
+            if chunk == b'':
+                return
+            buffer.extend(chunk)
+        b_playload = buffer[:msgsz]
+        del buffer[msgsz:]    # consumed the payload part. maybe extra stuff in buffer (next message)
+
+        # Reconstitute a message from the data (you implement)
+        yield recreate_message(b_msgtype.decode('utf-8'), b_playload.decode('utf-8'))

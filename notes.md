@@ -114,10 +114,18 @@
   *  asyncio  
      - async functions can't exec independently  
 
-
+  * coroutine  
 
 
 
 #### Linguistic abstraction  
+  * decorate  
+
+
+#### ideas  
+  * thinking about composition (how pieces fit together)  
+  *  making code that can be tested, debugged, etc.  
+  * getting ideas about abstraction  
+  *  
 
 #### reference

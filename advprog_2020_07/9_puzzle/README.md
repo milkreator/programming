@@ -16,7 +16,7 @@ Potentially you take this even further and end up writing an entirely
 new programming language.  In doing so, you'd end up reinventing
 something like SQL or maybe Prolog.  We're not going to go that far.
 However, we are going to explore the general idea by taking a few
-small steps into Python metaprogramming. 
+small steps into **Python metaprogramming**. 
 
 ## Function Decorators
 
