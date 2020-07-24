@@ -97,10 +97,26 @@
 
   * checked Exceptions    
 
+  * working with objects?  working with functions?  
+
 #### Concurrency  
+  * callback  
 
   * asyncio  
+
+  * generator 
   
+
+#### I/O  
+  * network ... low level sockets  
+  * from socket import *  
+
+  *  asyncio  
+     - async functions can't exec independently  
+
+
+
+
 
 #### Linguistic abstraction  
 

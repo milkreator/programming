@@ -18,8 +18,8 @@
 # 2. The message size (an integer) will be encoded as a UTF-8 string,
 #    terminated by a newline (\r\n).
 #
-# 3. The message contents, encoded as UTF-8 JSON will follow. 
-#     
+# 3. The message contents, encoded as UTF-8 JSON will follow.
+#
 # To illustrate, suppose that the following classes represent a few
 # different kinds of messages:
 
@@ -58,7 +58,7 @@ def example():
     print(encode_message(msg2))
 
 example()
-    
+
 # -----------------------------------------------------------------------------
 # Exercise 1 - The recreator
 #
@@ -73,9 +73,23 @@ example()
 #
 # Bonus: Could you also make the function enforce the presence of required
 # message attributes?
+import json
 
 def recreate_message(msgtype, payload):
-    ...  # You implement
+    # You implement
+    data = json.loads(payload)
+    sequence = data.pop('sequence')
+    if msgtype == 'ChatMessage':
+        msg = ChatMessage(**data)
+    elif msgtype == 'PlayerUpdate':
+        msg = PlayerUpdate(**data)
+    else:
+        raise RuntimeError('Bad message type')
+
+    # retroactively patch the sequence number
+    msg.sequence = sequence
+    return msg
+
 
 def test_recreator():
     msg1 = recreate_message('ChatMessage', '{"sequence": 1, "playerid": "Dave", "text": "Hello World"}')
@@ -105,8 +119,8 @@ def test_recreator():
         # Above message is missing fields for x/y.  Could this be caught?
         print("Very good creator!")
 
-# Uncomment when ready        
-# test_recreator()
+# Uncomment when ready
+test_recreator()
 
 # -----------------------------------------------------------------------------
 # Exercise 2 - The Receiver
@@ -117,29 +131,52 @@ def test_recreator():
 #
 # A common object used for network communication is a "socket".  A socket
 # has a method sock.recv(maxsize) that receives bytes (up to a requested
-# maximum size).  It returns an empty byte-string when a connection is 
-# closed. 
+# maximum size).  It returns an empty byte-string when a connection is
+# closed.
 #
 # Your task is to write a generator function that reads raw bytes off
 # of a socket and produces fully formed Message instances using the
 # recreate_message() function you just wrote. Here's a skeleton:
 
 def receive_messages(sock):
+    # problem.
+    # we will get some stream of bytes off the network. but it's going to
+    # show up as fragments of unpredictable size.  Thus, we have to collect all of
+    # these fragments and reassemble them into complete messages shomehow
+    #
+    buffer = bytearray()
     while True:
-        chunk = sock.recv(100000)    # Receive some data (actual size unknown)
-        if not chunk:
-            break
+        # A message must have at least 2 complete lines of text in it
+        #  <message type>\r\n
+        #  <message size>\r\n
+        # if we don't have this, we have to read more data
+        while buffer.count(b'\r\n') < 2:
+            chunk = sock.recv(100000)    # Receive some data (actual size unknown)
+            if chunk == b'':
+                return     #the other end of the connection got closed. No more data will follow
+            buffer.extend(chunk)
+
+        b_msgtype, b_msgsz, buffer = buffer.split(b'\r\n', 2)
+        msgsz = int(b_msgsz)
+        while len(buffer) < msgsz:  # incomplete payload. keep reading data
+            chunk = sock.recv(100000)
+            if chunk == b'':
+                return
+            buffer.extend(chunk)
+        b_playload = buffer[:msgsz]
+        del buffer[msgsz:]    # consumed the payload part. maybe extra stuff in buffer (next message)
+
         # Reconstitute a message from the data (you implement)
-        ...
-        yield recreate_message(msgtype, payload)
+        yield recreate_message(b_msgtype.decode('utf-8'), b_playload.decode('utf-8'))
+
 
 # This test requires the use of the 'testmsg.py' script in this same directory.
-# It must be running in a separate Python process (open a separate terminal 
-# window and run it there). 
+# It must be running in a separate Python process (open a separate terminal
+# window and run it there).
 def test_receiver():
     print("Testing receiver")
     import socket
-    sock = socket.create_connection(('localhost', 19000))
+    sock = socket.create_connection(('localhost', 10000))
     messages = []
     for msg in receive_messages(sock):
         messages.append(msg)
@@ -160,7 +197,7 @@ def test_receiver():
     print('Good receiver!')
 
 # Uncomment when ready
-# test_receiver()
+test_receiver()
 
 # -----------------------------------------------------------------------------
 # Exercise 3 - The Async
@@ -172,23 +209,43 @@ def test_receiver():
 # receive_messages() that makes use of Python's asyncio module instead.
 #
 # If you've never used asyncio before, this is not going to be a tutorial.
-# However, asyncio provides a similar sock.recv() operation. It just 
+# However, asyncio provides a similar sock.recv() operation. It just
 # looks a bit different.  Here's a skeleton of the code you need to write:
 
 import asyncio
 
 async def areceive_messages(sock):
     loop = asyncio.get_event_loop()
+
+    buffer = bytearray()
     while True:
-        chunk = await loop.sock_recv(sock, 100000) 
-        if not chunk:
-            break
-        ...
-        yield recreate_message(msgtype, payload)
+        # A message must have at least 2 complete lines of text in it
+        #  <message type>\r\n
+        #  <message size>\r\n
+        # if we don't have this, we have to read more data
+        while buffer.count(b'\r\n') < 2:
+            chunk = await loop.sock_recv(sock, 100000)
+            if not chunk:
+                break
+            buffer.extend(chunk)
+
+        b_msgtype, b_msgsz, buffer = buffer.split(b'\r\n', 2)
+        msgsz = int(b_msgsz)
+        while len(buffer) < msgsz:  # incomplete payload. keep reading data
+            chunk = await loop.sock.recv(100000)
+            if chunk == b'':
+                return
+            buffer.extend(chunk)
+        b_playload = buffer[:msgsz]
+        del buffer[msgsz:]    # consumed the payload part. maybe extra stuff in buffer (next message)
+
+        # Reconstitute a message from the data (you implement)
+        yield recreate_message(b_msgtype.decode('utf-8'), b_playload.decode('utf-8'))
+
 
 # This test requires the use of the 'testmsg.py' script in this same directory.
-# It must be running in a separate Python process (open a separate terminal 
-# window and run it there). 
+# It must be running in a separate Python process (open a separate terminal
+# window and run it there).
 async def test_areceiver():
     print("Testing areceiver")
     import socket
@@ -215,10 +272,10 @@ async def test_areceiver():
     print('Good async receiver!')
 
 # Uncomment to run the above test
-# asyncio.run(test_areceiver())
+asyncio.run(test_areceiver())
 
 # -----------------------------------------------------------------------------
-# Exercise 4 - DRY (Don't Repeat Yourself) (Don't Repeat Yourself)
+# Exercise 4 - **DRY (Don't Repeat Yourself)** (Don't Repeat Yourself)
 #
 # For better or for worse, I/O handling in Python is split between two
 # worlds.  There's the world of normal "synchronous" functions and threads
@@ -232,14 +289,14 @@ async def test_areceiver():
 # it requires the use of an "async" for-loop or an "await".
 #
 # A well-known rant about this problem can be found here:
-# 
+#
 #   https://journal.stuffwithstuff.com/2015/02/01/what-color-is-your-function/
 #
 # However, this split between "sync" and "async" also presents a real
 # programming challenge.  In many applications, there is critical
 # "business logic" that is at the heart of what you are doing (i.e.,
 # solving the actual problem).  You may not want to anchor it to a
-# specific implementation of I/O. 
+# specific implementation of I/O.
 #
 # An example of this is the code that implements the message decoding
 # protocol in earlier exercises.  There's a pretty good chance that your
@@ -251,15 +308,9 @@ async def test_areceiver():
 # areceive_messages() functions so that the protocol-related code is
 # only implemented ONCE.  Here, "protocol" refers to the code that
 # recognizes and decodes the parts needed to reconstruct Message
-# objects (i.e., the message type, size, JSON payload, etc.). 
+# objects (i.e., the message type, size, JSON payload, etc.).
 # Can that code be isolated in some manner that makes it usable from
 # any I/O implementation?
 #
-# Note: Implementing I/O-independent protocols is increasingly common 
+# Note: Implementing I/O-independent protocols is increasingly common
 # in Python.  See https://sans-io.readthedocs.io.
-
-
-
-
-    
-

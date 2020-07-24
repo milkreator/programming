@@ -6,8 +6,8 @@ encoding, working with bytes, and the implementation of I/O protocols.
 
 This project also explores a more fundamental design problem
 concerning I/O in modern Python development--and that's the choice
-between using synchronous code (i.e. threads) or the choice of using
-asynchronous code (i.e., the `asyncio` module and relatives).
+between using **synchronous code** (i.e. threads) or the choice of using
+**asynchronous code** (i.e., the `asyncio` module and relatives).
 
 Go the file `protocol.py` to start the project.
 
@@ -55,7 +55,7 @@ bytearray(b'!world')
 >>>
 ```
 
-A bytearray is often useful for assembling fragments of I/O into
+**A bytearray is often useful for assembling fragments of I/O** into
 larger messages.  For example, if you were reading data from a network
 connection, you might have some code like this:
 
@@ -107,9 +107,9 @@ asyncio.run(countdown(10))
 ## What Color is Your I/O?
 
 One of the most fundamental problems in programming is that of
-abstraction and decoupling of components. In fact, a major theme of
-this entire course has focused on issues of decoupling, interactions
-between parts, and other matters.  Why should I/O be any different?
+**abstraction and decoupling of components**. In fact, a major theme of
+this entire course has focused on **issues of decoupling, interactions
+between parts, and other matters**.  Why should I/O be any different?
 If you're implementing an application, isn't the choice of I/O an
 implementation detail?  Why should it matter?
 
