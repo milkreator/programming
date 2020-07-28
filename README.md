@@ -1,5 +1,5 @@
 # programming
-course - Advanced Programming with Python
+Advanced Programming (with Python)
 
 
 
